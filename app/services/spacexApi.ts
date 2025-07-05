@@ -8,12 +8,13 @@ const api = axios.create({
   },
 });
 
-const allLaunches = () => api.get('/launches');
-const pastLaunches = () => api.get('/launches/past');
-const upcomingLaunches = () => api.get('/launches/upcoming');
-const getLaunchByID = (id: string) => api.get(`/launches/${id}`);
-const getRocketByID = (id: string) => api.get(`/rockets/${id}`);
-const getLaunchPadByID = (id: string) => api.get(`/launchpads/${id}`);
+export const allLaunches = () => api.get('/launches');
+export const pastLaunches = () => api.get('/launches/past');
+export const upcomingLaunches = () => api.get('/launches/upcoming');
+export const getLaunchByID = (id: string) => api.get(`/launches/${id}`);
+export const getRocketByID = (id: string) => api.get(`/rockets/${id}`);
+export const getLaunchPadByID = (id: string) => api.get(`/launchpads/${id}`);
+export const getPayloads = (id: string) => api.get(`/payloads/${id}`);
 
 
 
