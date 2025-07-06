@@ -9,6 +9,7 @@ const api = axios.create({
 });
 
 export const allLaunches = () => api.get('/launches');
+export const queryLaunches = (query: any) => api.post('/launches/query', query)
 export const pastLaunches = () => api.get('/launches/past');
 export const upcomingLaunches = () => api.get('/launches/upcoming');
 export const getLaunchByID = (id: string) => api.get(`/launches/${id}`);

@@ -27,26 +27,35 @@ const statusStyle: Record<string, string> = {
 
 interface TableProps {
   launches: any[];
+
 }
 
 const Table = ({ launches }: TableProps) => {
+  const itemsPerPage = 12;
   const [enrichedData, setEnrichedData] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 12;
-
+  const [currentLaunches, setCurrentLaunches] = useState<any[]>([]);
+  const [totalPages, setTotalPages] = useState<number>(Math.ceil(launches.length / itemsPerPage));
   const startIndex = (currentPage - 1) * itemsPerPage;
-  const currentItems = launches.slice(startIndex, startIndex + itemsPerPage);
-  console.log("current: ", currentItems);
 
-  useEffect(() => {
-    const getData = async () => {
-      const data = await enrichLaunchData(currentItems);
-      console.log("data", data); 
-      setEnrichedData(data);
-    };
-    getData();
-  }, []);
   
+
+useEffect(() => {
+  if (!launches || launches.length === 0) return;
+
+  const pageLaunches = launches.slice(startIndex, startIndex + itemsPerPage);
+  setCurrentLaunches(pageLaunches); // optional, for debugging or display
+  setTotalPages(Math.ceil(launches.length / itemsPerPage));
+
+  const getData = async () => {
+    console.log("page: ", pageLaunches);
+    const data = await enrichLaunchData(pageLaunches);
+    setEnrichedData(data);
+  };
+
+  getData();
+}, [currentPage, launches]);
+ 
   return (
     <div className="overflow-x-auto p-4">
       <table className="min-w-full text-sm text-left rounded-xl overflow-hidden shadow-sm">
