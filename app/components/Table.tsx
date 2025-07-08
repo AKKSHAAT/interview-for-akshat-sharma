@@ -1,23 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { getLaunchByID } from "../services/spacexApi";
 import { enrichLaunchData } from "../utils/launchUtils";
-
-const data = Array.from({ length: 12 }, (_, i) => ({
-  no: String(i + 1).padStart(2, "0"),
-  launched: [
-    "24 March 2006 at 22:30",
-    "28 September 2008 23:15",
-    "04 June 2010 18:45",
-    "06 December 2020 16:17",
-  ][i % 4],
-  location: ["Kwajalein Atoll", "CCAFS SLC 40", "KSC LC 39A"][i % 3],
-  mission: ["FalconSat", "RatSat", "Falcon 9 Test Flight", "CRS-21"][i % 4],
-  orbit: ["LEO", "ISS"][i % 2],
-  status: ["Failed", "Success", "Upcoming"][i % 3],
-  rocket: "Falcon 9",
-}));
 
 const statusStyle: Record<string, string> = {
   Failed: "bg-red-100 text-red-500",
@@ -27,35 +11,26 @@ const statusStyle: Record<string, string> = {
 
 interface TableProps {
   launches: any[];
-
 }
 
 const Table = ({ launches }: TableProps) => {
   const itemsPerPage = 12;
-  const [enrichedData, setEnrichedData] = useState([]);
+  const [enrichedData, setEnrichedData] = useState<any[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
-  const [currentLaunches, setCurrentLaunches] = useState<any[]>([]);
-  const [totalPages, setTotalPages] = useState<number>(Math.ceil(launches.length / itemsPerPage));
   const startIndex = (currentPage - 1) * itemsPerPage;
 
-  
+  useEffect(() => {
+    if (!launches || launches.length === 0) return;
 
-useEffect(() => {
-  if (!launches || launches.length === 0) return;
+    const pageLaunches = launches.slice(startIndex, startIndex + itemsPerPage);
+    const getData = async () => {
+      const data = await enrichLaunchData(pageLaunches);
+      setEnrichedData(data);
+    };
 
-  const pageLaunches = launches.slice(startIndex, startIndex + itemsPerPage);
-  setCurrentLaunches(pageLaunches); // optional, for debugging or display
-  setTotalPages(Math.ceil(launches.length / itemsPerPage));
+    getData();
+  }, [currentPage, launches]);
 
-  const getData = async () => {
-    console.log("page: ", pageLaunches);
-    const data = await enrichLaunchData(pageLaunches);
-    setEnrichedData(data);
-  };
-
-  getData();
-}, [currentPage, launches]);
- 
   return (
     <div className="overflow-x-auto p-4">
       <table className="min-w-full text-sm text-left rounded-xl overflow-hidden shadow-sm">
@@ -70,39 +45,67 @@ useEffect(() => {
             <th className="px-6 py-4">Rocket</th>
           </tr>
         </thead>
-        <tbody className="">
-          {enrichedData.map((launch, idx) => {
-            return (
+        <tbody>
+          {enrichedData.length === 0 ? (
+            <tr>
+              <td colSpan={7} className="text-center py-4 text-gray-500">
+                No results found for the specified filter
+              </td>
+            </tr>
+          ) : (
+            enrichedData.map((launch, idx) => (
               <tr key={idx} className="hover:bg-gray-50">
-                  <td className="px-6 py-4">{launch.no}</td>
-                  <td className="px-6 py-4">{new Date(launch.launchedUtc).toUTCString()}</td>
-                  <td className="px-6 py-4">{launch.location}</td>
-                  <td className="px-6 py-4">{launch.mission}</td>
-                  <td className="px-6 py-4">{launch.orbit}</td>
-                  <td className="px-6 py-4">
-                    <span
-                      className={`px-2 py-1 rounded-full text-xs font-semibold ${statusStyle[launch.status]}`}
-                    >
-                      {launch.status}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4">{launch.rocket}</td>
+                <td className="px-6 py-4">{launch.no}</td>
+                <td className="px-6 py-4">
+                  {new Date(launch.launchedUtc).toUTCString()}
+                </td>
+                <td className="px-6 py-4">{launch.location}</td>
+                <td className="px-6 py-4">{launch.mission}</td>
+                <td className="px-6 py-4">{launch.orbit}</td>
+                <td className="px-6 py-4">
+                  <span
+                    className={`px-2 py-1 rounded-full text-xs font-semibold ${statusStyle[launch.status]}`}
+                  >
+                    {launch.status}
+                  </span>
+                </td>
+                <td className="px-6 py-4">{launch.rocket}</td>
               </tr>
-              )
-            })}
+            ))
+          )}
         </tbody>
       </table>
 
       {/* Pagination */}
       <div className="flex items-center justify-end gap-1 mt-4 text-sm">
-        <button className="px-3 py-1 border rounded-md">&lt;</button>
-        <button className="px-3 py-1 border rounded-md bg-gray-200 font-semibold">
-          1
+        <button
+          className="px-3 py-1 border rounded-md"
+          onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+        >
+          &lt;
         </button>
-        <button className="px-3 py-1 border rounded-md">2</button>
-        <span className="px-2">...</span>
-        <button className="px-3 py-1 border rounded-md">10</button>
-        <button className="px-3 py-1 border rounded-md">&gt;</button>
+        {[1, 2, "...", 10].map((item, i) => (
+          <button
+            key={i}
+            className={`px-3 py-1 border rounded-md ${
+              item === currentPage ? "bg-gray-200 font-semibold" : ""
+            }`}
+            onClick={() =>
+              typeof item === "number" && setCurrentPage(item)
+            }
+            disabled={item === "..."}
+          >
+            {item}
+          </button>
+        ))}
+        <button
+          className="px-3 py-1 border rounded-md"
+          onClick={() =>
+            setCurrentPage((p) => Math.min(p + 1, Math.ceil(launches.length / itemsPerPage)))
+          }
+        >
+          &gt;
+        </button>
       </div>
     </div>
   );

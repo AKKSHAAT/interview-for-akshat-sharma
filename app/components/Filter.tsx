@@ -11,7 +11,7 @@ const Filter = ({
   onChange: (value: string) => void;
 }) => {
   const [open, setOpen] = useState(false);
-  const options = ["All Launches", "Success", "Failed", "Upcoming"];
+  const options = ["All Launches", "Success", "Failed", "Upcoming"]
 
   return (
     <div className="relative inline-block text-left">
